@@ -10,6 +10,10 @@ yarn add react-native-contact-select
 ```sh
 npm install react-native-contact-select
 ```
+Run pod install for iOS
+```sh
+pod install --project-directory=ios
+```
 ## Permissions
 At the moment this library doesn't handle permissions for you. Before running select contact make sure that the app has required permissions.
 
