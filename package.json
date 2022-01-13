@@ -1,6 +1,6 @@
 {
   "name": "react-native-contact-select",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "react-native library for selecting contact from native android and iOS contacts",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
