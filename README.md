@@ -1,12 +1,13 @@
 # react-native-contact-select
 
-react-native library for selecting contact from native android and iOS contacts
+react-native library for selecting contact from native android and iOS contacts picker.
 
 ## Installation
 
 ```sh
 yarn add react-native-contact-select
 ```
+or
 ```sh
 npm install react-native-contact-select
 ```
@@ -15,19 +16,18 @@ Run pod install for iOS
 pod install --project-directory=ios
 ```
 ## Permissions
-At the moment this library doesn't handle permissions for you. Before running select contact make sure that the app has required permissions.
 
-For iOS add this to your `Info.plist`:
-```
-<key>NSContactsUsageDescription</key>
-<string>Explain why you use contacts</string>
-```
+### iOS
+For iOS you don't need to handle permissions because native `CNContactPickerViewController` is being used.
+
+### Android
 For android add following to your `AndroidManifest.xml`:
 ```
 <uses-permission android:name="android.permission.READ_CONTACTS" />
 ```
-## Usage
+Permission will automatically be requested when you call for `selectContact` method.
 
+## Usage
 ```tsx
 import { selectContact } from 'react-native-contact-select';
 
@@ -41,7 +41,5 @@ selectContact().then(contact => {
 ## License
 
 MIT
-
-
 
 Project bootstrapped with [react-native-builder-bob](https://github.com/callstack/react-native-builder-bob)

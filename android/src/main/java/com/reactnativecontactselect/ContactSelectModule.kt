@@ -1,5 +1,6 @@
 package com.reactnativecontactselect
 
+import android.Manifest
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -18,16 +19,12 @@ import android.content.ContentResolver
 import android.content.pm.PackageManager
 import android.provider.ContactsContract.CommonDataKinds.Phone
 
-import android.provider.Contacts.People
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.facebook.react.modules.core.PermissionListener
-import java.util.*
 import com.facebook.react.modules.core.PermissionAwareActivity
 
 
-class ContactSelectModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener {
+class ContactSelectModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), ActivityEventListener, PermissionListener {
   private var contentResolver: ContentResolver? = null;
 
   init {
@@ -43,7 +40,8 @@ class ContactSelectModule(reactContext: ReactApplicationContext) : ReactContextB
   val ERROR_CONTACT_EXCEPTION = "CONTACT_EXCEPTION"
   val ERROR_CONTACT_PERMISSION = "CONTACT_NO_PERMISSION"
 
-  private val CONTACT_SELECT_CODE = 2
+  private val REQUEST_CONTACT_SELECTION_CODE = 2
+  private val REQUEST_CONTACT_PERMISSION_CODE = 112
 
   override fun getName(): String {
     return "ContactSelect"
@@ -53,7 +51,11 @@ class ContactSelectModule(reactContext: ReactApplicationContext) : ReactContextB
   fun selectContact(promise: Promise) {
     reactPromise = promise;
     if (ContextCompat.checkSelfPermission(reactApplicationContext, android.Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_DENIED) {
-      reactPromise?.reject(ERROR_CONTACT_PERMISSION, "Permission not permitted")
+      val PERMISSIONS = arrayOf(Manifest.permission.READ_CONTACTS)
+      if (currentActivity != null) {
+        val activity = currentActivity as PermissionAwareActivity;
+        activity?.requestPermissions(PERMISSIONS, REQUEST_CONTACT_PERMISSION_CODE, this);
+      }
     } else {
       pickContact()
     }
@@ -61,12 +63,12 @@ class ContactSelectModule(reactContext: ReactApplicationContext) : ReactContextB
 
   private fun pickContact() {
     val intent = Intent(Intent.ACTION_PICK, Uri.parse("content://contacts")).setType(Phone.CONTENT_TYPE)
-    currentActivity!!.startActivityForResult(intent, CONTACT_SELECT_CODE)
+    currentActivity!!.startActivityForResult(intent, REQUEST_CONTACT_SELECTION_CODE)
   }
 
   override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, intent: Intent?) {
     try {
-      if (requestCode == CONTACT_SELECT_CODE) {
+      if (requestCode == REQUEST_CONTACT_SELECTION_CODE) {
 
         if (resultCode == Activity.RESULT_OK) {
 
@@ -98,9 +100,23 @@ class ContactSelectModule(reactContext: ReactApplicationContext) : ReactContextB
     }
   }
 
-
   override fun onNewIntent(intent: Intent) {
 
   }
 
+  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>?, grantResults: IntArray?): Boolean {
+    when (requestCode) {
+      REQUEST_CONTACT_PERMISSION_CODE -> {
+        if (grantResults!!.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+          pickContact()
+          return true;
+        } else {
+          return false;
+          reactPromise?.reject(ERROR_CONTACT_PERMISSION, "Permission not permitted")
+        }
+      }
+    }
+    reactPromise?.reject(ERROR_CONTACT_CANCELLED, "User canceled")
+    return true;
+  }
 }
